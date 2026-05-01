@@ -21,7 +21,7 @@ jobs:
       - run: nix build -L .#gepetto-doc
       - run: mkdir doc
       - run: cp -r result/* doc
-      - uses: actions/upload-pages-artifact@v4
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: doc/
   deploy:
