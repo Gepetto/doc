@@ -11,7 +11,7 @@
   aligator,
   biped-stabilizer,
   coal,
-  crocoddyl,
+  crocoddyl-doc,
   eiquadprog,
   flex-joints,
   hpp-affordance,
@@ -23,7 +23,6 @@
   hpp-doc,
   hpp-environments,
   hpp-gepetto-viewer,
-  hpp-gui,
   hpp-manipulation,
   hpp-manipulation-urdf,
   hpp-pinocchio,
@@ -38,12 +37,11 @@
   multicontact-api,
   ndcurves,
   pinocchio,
-  proxsuite,
+  proxsuite-doc,
   python3Packages,
   tsid,
-# keep-sorted end
+  # keep-sorted end
 }:
-
 let
   env = buildEnv {
     name = "gepetto-doc";
@@ -55,7 +53,7 @@ let
       aligator
       biped-stabilizer
       coal
-      crocoddyl
+      crocoddyl-doc
       eiquadprog
       flex-joints
       hpp-affordance
@@ -67,7 +65,6 @@ let
       hpp-doc
       hpp-environments
       hpp-gepetto-viewer
-      hpp-gui
       hpp-manipulation
       hpp-manipulation-urdf
       hpp-pinocchio
@@ -82,7 +79,7 @@ let
       multicontact-api
       ndcurves
       pinocchio
-      proxsuite
+      proxsuite-doc
       python3Packages.eigenpy
       tsid
       # keep-sorted end
@@ -103,22 +100,18 @@ stdenvNoCC.mkDerivation {
     cp -rL ${env}/share/doc/* $out
 
     cd $out
-    # TODO: pinocchio+crocoddyl latex issues
-    # find . -type f -name \*.log | tee | grep . && exit 1
+    find . -type f -name \*.log | tee | grep . && exit 1
     find . -type d -name MathJax | tee | grep . && exit 1
 
     chmod -R +w .
     find . -maxdepth 3 -mindepth 3 -type f -exec sed -i -e "s=$NIX_STORE/.*/share/doc=../..=g" {} +
     find . -maxdepth 4 -mindepth 4 -type f -exec sed -i -e "s=$NIX_STORE/.*/share/doc=../../..=g" {} +
 
-    # TODO (proxsuite)
-    sed -i "s/'The solver's/'The solver\\\'s/" $(grep -rl "'The solver's")
-
     echo "dedup & minify"
     fclones group . | fclones link
     minify -ri .
 
-    echo "<html><head><title>Gepetto Doc</title></head><body><ul>" > index.html
+    echo "<html><head><title>Gepetto Doc</title></head><body><ul>" > index.html
     for prj in *
     do
       [[ $prj == index.html ]] && continue
