@@ -1,42 +1,41 @@
 {
   description = "Merged doxygen output from our projects and their dependencies";
 
-  inputs = {
-    gepetto.url = "github:gepetto/nix";
-    gazebros2nix.follows = "gepetto/gazebros2nix";
-    flake-parts.follows = "gepetto/flake-parts";
-    nixpkgs.follows = "gepetto/nixpkgs";
-    nix-ros-overlay.follows = "gepetto/nix-ros-overlay";
-    systems.follows = "gepetto/systems";
-    treefmt-nix.follows = "gepetto/treefmt-nix";
-  };
+  inputs.gepetto.url = "github:gepetto/nix";
 
   outputs =
     inputs:
-    inputs.flake-parts.lib.mkFlake { inherit inputs; } (
+    inputs.gepetto.lib.mkFlakoboros inputs (
       { ... }:
+      let
+        inherit (inputs.gepetto.inputs.flakoboros.lib) tmpOverride;
+      in
       {
-        systems = import inputs.systems;
-        imports = [
-          inputs.gepetto.flakeModule
-          {
-            gazebros2nix = {
-              packages.gepetto-doc = ./.;
-              # https://github.com/NixOS/nixpkgs/pull/455633/changes for minify -i
-              overrides.minify =
-                final:
-                (super: rec {
-                  version = "2.24.5";
-                  src = final.fetchFromGitHub {
-                    inherit (super.src) owner repo;
-                    rev = "v${version}";
-                    hash = "sha256-0OmL/HG4pt2iDha6NcQoUKWz2u9vsLH6QzYhHb+mTL0=";
-                  };
-                  vendorHash = "sha256-QS0vffGJaaDhXvc7ylJmFJ1s83kaIqFWsBXNWVozt1k=";
-                });
+        packages = {
+          gepetto-doc = ./package.nix;
+          crocoddyl-doc =
+            { crocoddyl, fetchFromGitHub }:
+            (tmpOverride crocoddyl "3.2.1").overrideAttrs {
+              src = fetchFromGitHub {
+                inherit (crocoddyl.src) owner repo;
+                # https://github.com/loco-3d/crocoddyl/pull/1536 doxygen merge commit
+                rev = "be2c718";
+                hash = "sha256-LNScCJdyoFICFm12neOLDsSwsgxxyKDEwNqbr/YsuDA=";
+              };
+              doCheck = false;
             };
-          }
-        ];
+          proxsuite-doc =
+            { proxsuite, fetchFromGitHub }:
+            (tmpOverride proxsuite "0.7.3").overrideAttrs {
+              src = fetchFromGitHub {
+                inherit (proxsuite.src) owner repo;
+                # https://github.com/Simple-Robotics/proxsuite/pull/467 mathjax merge commit
+                rev = "d099626";
+                hash = "sha256-2iErphdVUy+O389Y6vBfuDmiyIt+qBLdierTZ33eJW0=";
+              };
+              doCheck = false;
+            };
+        };
       }
     );
 }
